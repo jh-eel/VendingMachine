@@ -5,25 +5,34 @@ namespace Vending_Machine
 {
     class Program
     {
+        public static uint Money { get; set; }
+        public static uint Buy_amount { get; set; }
+        public static uint Buy_item_stock { get; set; }
+        public static uint Buy_item_value { get; set; }
+        public static string Buy_item_name { get; set; }
+        public enum Emenu
+        {
+            None,
+            GetMenu,
+            BuyItem,
+            SetMoney,
+            GetMoney,
+            Exit
+        }
+
         static void Main(string[] args)
         {
-            int money = 0;
-            int menu_num;
-            int buy_num;
-            int buy_counts;
-            int buy_amount = 0;
-            int buy_item_stock = 0;
-            int buy_item_value;
-            string buy_item_name = "";
+
 
             // 아이템 선언
             Item apple = new Item(number: 1, value: 500, stock: 50, name: "Apple");
             Item banana = new Item(number: 2, value: 200, stock: 80, name: "Banana");
             Item lemon = new Item(number: 3, value: 700, stock: 20, name: "Lemon");
             Item mikang = new Item(number: 4, value: 800, stock: 100, name: "Mikang");
+            Item steak = new Item(number: 5, value: 1000, stock: 10, name: "Steak");
 
             Console.WriteLine("#################################");
-            Console.WriteLine("###### Vending Machine 0.1 ######");
+            Console.WriteLine("###### Vending Machine 0.2 ######");
             Console.WriteLine("#################################\n");
             Item.GetMenu();
 
@@ -32,123 +41,166 @@ namespace Vending_Machine
             {
                 //제어 메뉴 출력
                 Console.WriteLine("1.메뉴 출력  2.주문하기  3.잔액 충전  4.잔액 확인  5.종료 \n");
-                Console.Write("실행 명령 번호: ");
-                menu_num = int.Parse(Console.ReadLine());
-                Console.WriteLine("");
+                Console.Write("실행 명령 번호: \n");
+                InputNumber(out uint menu_num);
+                Emenu menu_select = (Emenu)menu_num;
 
-                if (menu_num == 1)
+                switch (menu_select)
                 {
-                    Item.GetMenu();
+                    case Emenu.GetMenu:
+                        Item.GetMenu();
+                        break;
+
+                    case Emenu.BuyItem:
+                        BuyItem();
+                        break;
+
+                    case Emenu.SetMoney:
+                        SetMoney();
+                        break;
+
+                    case Emenu.GetMoney:
+                        Console.WriteLine($"현재 잔액: {Money} 원\n");
+                        break;
+
+                    case Emenu.Exit:
+                        Console.WriteLine("###########################");
+                        Console.WriteLine("######## 또 오세요 ########");
+                        Console.WriteLine("###########################");
+                        return;
+
+                    default:
+                        Console.WriteLine("존재하지 않는 명령 번호입니다.\n");
+                        break;
                 }
-                else if (menu_num == 2)
+
+            }
+        }
+
+        static void SetMoney()
+        {
+            Console.WriteLine("\n최대 보유 가능 금액: 4294967295 원\n");
+            Console.WriteLine($"현재 잔액: {Money} 원\n");
+            Console.Write("충전 금액: ");
+            InputNumber(out uint money_charge);
+            if (Money <= uint.MaxValue - money_charge)
+            {
+                Money += money_charge;
+            }
+            else
+            {
+                Console.WriteLine("최대 보유 가능 금액을 초과하였습니다.");
+            }
+            Console.WriteLine($"현재 잔액: {Money} 원\n");
+
+        }
+
+        static void BuyItem()
+        {
+            Console.Write("구매할 상품 번호: ");
+            InputNumber(out uint buy_num);
+            if (buy_num == 0)
+            {
+                return;
+            }
+
+            if (buy_num > Item.item_instance.Count)
+            {
+                Console.WriteLine("존재하지 않는 상품 번호입니다. \n");
+                return;
+            }
+
+            Console.Write("구매할 상품 개수: ");
+            InputNumber(out uint buy_counts);
+            if (buy_counts == 0)
+            {
+                return;
+            }
+
+            //생성된 인스턴스 조회
+            foreach (var instance in Item.item_instance)
+            {
+                if (instance.Item_number == buy_num)
                 {
-                    BuyItem();
-                }
-                else if (menu_num == 3)
-                {
-                    SetMoney();
-                }
-                else if (menu_num == 4)
-                {
-                    Console.WriteLine($"현재 잔액: {money} 원\n");
-                }
-                else if (menu_num == 5)
-                {
-                    Console.WriteLine("###########################");
-                    Console.WriteLine("######## 또 오세요 ########");
-                    Console.WriteLine("###########################");
+                    Buy_amount = instance.Item_value * buy_counts;
+                    Buy_item_name = instance.Item_name;
+                    Buy_item_value = instance.Item_value;
+                    Buy_item_stock = instance.Item_stock;
                     break;
                 }
-                else
-                {
-                    Console.WriteLine("올바르지 않은 값입니다.");
-                }
-
             }
 
-            void SetMoney()
+            Console.WriteLine($"총 결제 금액: {Buy_amount}\n");
+
+            if (Money < Buy_amount && Buy_item_stock >= buy_counts) // 잔액이 부족하고, 재고가 충분할 시
             {
-                Console.Write("충전 금액: ");
-                money += int.Parse(Console.ReadLine());
-                Console.WriteLine($"현재 잔액: {money} 원\n");
+                Console.WriteLine("잔액이 부족합니다.");
+                Console.WriteLine($"현재 잔액: {Money} 원\n");
             }
-
-            void BuyItem()
+            else if (Money >= Buy_amount && Buy_item_stock >= buy_counts) //잔액이 충분하고, 재고가 충분할 시
             {
-                Console.Write("구매할 상품 번호: ");
-                buy_num = int.Parse(Console.ReadLine());
-                Console.Write("구매할 상품 개수: ");
-                buy_counts = int.Parse(Console.ReadLine());
+                Money -= Buy_amount;
+                Console.WriteLine("결제 완료\n");
+                Console.WriteLine($"구매 상품 명: {Buy_item_name}  구매 수량: {buy_counts}");
+                Console.WriteLine($"현재 잔액: {Money} 원\n");
 
-                //생성된 인스턴스 조회
+                //재고 차감
                 foreach (var instance in Item.item_instance)
                 {
-                    if (instance.item_number == buy_num)
+                    if (instance.Item_number == buy_num)
                     {
-                        buy_amount = instance.item_value * buy_counts;
-                        buy_item_name = instance.item_name;
-                        buy_item_value = instance.item_value;
-                        buy_item_stock = instance.item_stock;
+                        instance.Item_stock -= buy_counts;
                         break;
                     }
                 }
-
-                Console.WriteLine($"총 결제 금액: {buy_amount}\n");
-
-                if (money < buy_amount && buy_item_stock >= buy_counts) // 잔액이 부족하고, 재고가 충분할 시
-                {
-                    Console.WriteLine("잔액이 부족합니다.");
-                    Console.WriteLine($"현재 잔액: {money} 원\n");
-                }
-                else if (money >= buy_amount && buy_item_stock >= buy_counts) //잔액이 충분하고, 재고가 충분할 시
-                {
-                    money -= buy_amount;
-                    Console.WriteLine("결제 완료\n");
-                    Console.WriteLine($"구매 상품 명: {buy_item_name}  구매 수량: {buy_counts}");
-                    Console.WriteLine($"현재 잔액: {money} 원\n");
-
-                    //재고 차감
-                    foreach (var instance in Item.item_instance)
-                    {
-                        if (instance.item_number == buy_num)
-                        {
-                            instance.item_stock -= buy_counts;
-                            break;
-                        }
-                    }
-                }
-                else if (buy_item_stock < buy_counts)
-                {
-                    Console.WriteLine("재고가 부족하거나 잘못된 상품 번호입니다.\n");
-                }
-
-                buy_amount = 0;
-                buy_item_stock = 0;
-
+            }
+            else if (Buy_item_stock < buy_counts)
+            {
+                Console.WriteLine("재고가 부족합니다\n");
             }
 
+            Buy_amount = 0;
+            Buy_item_stock = 0;
+
         }
+
+        static void InputNumber(out uint number)
+        {
+            bool valueSuccess = uint.TryParse(Console.ReadLine(), out uint input);
+
+            if (valueSuccess)
+            {
+                number = input;
+            }
+            else
+            {
+                Console.WriteLine("\n잘못된 값입니다.\n");
+                number = 0;
+            }
+        }
+
+
 
     }
 
     public class Item
     {
         static public List<Item> item_instance = new List<Item>();
-        static public int item_count { get; set; }
+        static public uint Item_count { get; set; }
 
-        public int item_number { get; set; }
-        public int item_value { get; set; }
-        public int item_stock { get; set; }
-        public string item_name { get; set; }
+        public uint Item_number { get; set; }
+        public uint Item_value { get; set; }
+        public uint Item_stock { get; set; }
+        public string Item_name { get; set; }
 
-        public Item(int number, int value, int stock, string name)
+        public Item(uint number, uint value, uint stock, string name)
         {
             Item.item_instance.Add(this);
-            this.item_number = number;
-            this.item_value = value;
-            this.item_stock = stock;
-            this.item_name = name;
-            item_count++;
+            this.Item_number = number;
+            this.Item_value = value;
+            this.Item_stock = stock;
+            this.Item_name = name;
+            Item_count++;
         }
 
         static public void GetMenu()
@@ -156,10 +208,10 @@ namespace Vending_Machine
             foreach (var instance in Item.item_instance)
             {
 
-                Console.WriteLine($"{instance.item_number}.{instance.item_name}  가격: {instance.item_value}  재고: {instance.item_stock}");
+                Console.WriteLine($"{instance.Item_number}.{instance.Item_name}  가격: {instance.Item_value}  재고: {instance.Item_stock}");
 
             }
-            Console.WriteLine($"총 상품 가짓수: {Item.item_count} \n\n");
+            Console.WriteLine($"총 상품 가짓수: {Item.Item_count} \n\n");
 
         }
 
