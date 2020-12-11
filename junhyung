@@ -1,0 +1,510 @@
+using System;
+using System.Collections.Generic;
+
+namespace Vending
+{
+
+    class Program
+    {
+        public static int Money { get; set; }
+        public static int Buy_amount { get; set; }
+        public static String Buy_name { get; set; }
+        public static int Buy_stock { get; set; }
+        public static int Buy_price { get; set; }
+        public static string Bought_name { get; set; }
+        public static int Bought_price { get; set; }
+        public static int Bought_stock { get; set; }
+        public static int Bought_money { get; set; }
+        static List<Drink> drink = new List<Drink>();
+        static List<History> history = new List<History>();
+
+
+
+        //public static List<Drink> Items = new List<Drink>();
+
+
+        public enum Emenu
+        {
+            None,
+            Menu,
+            Charge_Money,
+            Check_Money,
+            Buy_Drink,
+            Administ,
+            Exit
+        }
+
+        static void Main(string[] args)
+        {
+            //drink 선언
+            drink.Add(new Drink(name: "Cider", price: 700, stock: 50));
+            drink.Add(new Drink(name: "Cola", price: 800, stock: 50));
+            drink.Add(new Drink(name: "Water", price: 900, stock: 50));
+            drink.Add(new Drink(name: "Tea", price: 1000, stock: 50));
+
+            Console.WriteLine("############Vending Machine 0.3#############");
+            //메뉴호출
+            Drink.Menu();
+            while (true)
+            {
+                Console.WriteLine("1. Menu 2. Charge money 3. Check money 4. Buy 5. Go Admin 6. Exit");
+                Console.WriteLine("Plz select a feature to execute : \n");
+                NumberInput(out int Function_number);
+                Emenu menu_select = (Emenu)Function_number;
+
+                switch (menu_select)
+                {
+                    case Emenu.Menu:
+                        Drink.Menu();
+                        break;
+
+                    case Emenu.Charge_Money:
+                        Charge_Money();
+                        break;
+
+                    case Emenu.Check_Money:
+                        Check_Money();
+                        break;
+
+                    case Emenu.Buy_Drink:
+                        Buy_Drink();
+                        break;
+
+                    case Emenu.Administ:
+                        Admin.Login();
+                        break;
+
+                    case Emenu.Exit:
+                        Console.WriteLine("###########################");
+                        Console.WriteLine("######## Thank you ########");
+                        Console.WriteLine("###########################");
+                        return;
+
+                    default:
+                        Console.WriteLine("Plz input correct number.\n");
+                        break;
+                }
+
+            }
+
+
+        }
+        static void Charge_Money()
+        {
+            Console.WriteLine("Input money you want to charge :");
+            NumberInput(out int charge);
+            if (Money <= int.MaxValue - charge)
+            {
+                Money += charge;
+            }
+            else
+            {
+                Console.WriteLine("Over the Maxvalue.");
+            }
+            Console.WriteLine($"Money : {Money}");
+        }
+
+        static void Check_Money()
+        {
+            Console.WriteLine($"Money : {Money}");
+
+        }
+
+        static void Buy_Drink()
+        {
+            Console.WriteLine("Input drink number you want to buy : \n");//몇번살거?
+            NumberInput(out int Buy_itemnum);
+            
+            if (Buy_itemnum == 0)
+            {
+                Console.WriteLine("Wrong value");
+                return;
+            }
+            else if(Buy_itemnum > drink.Count)
+            {
+                Console.WriteLine("Wrong value");
+                return;
+            }
+            Buy_itemnum--;
+            Console.WriteLine("Input the number of item you want to buy : \n");//몇개살거?
+            NumberInput(out int Buy_num);
+            if (Buy_num == 0)
+            {
+                Console.WriteLine("Wrong value.");
+                return;
+            }
+
+            /*생성된 인스턴스 조회
+            foreach (var instance in Program.drink)
+            {
+                if (instance.Drink_number == Buy_itemnum)
+                {
+                    Buy_amount = instance.Drink_price * Buy_num;
+                    Buy_name = instance.Drink_name;
+                    Buy_price = instance.Drink_price;
+                    Buy_stock = instance.Drink_stock;
+                    break;
+                }
+            }
+            */
+            Buy_amount = Buy_num * drink[Buy_itemnum].Drink_price;
+            Bought_price = Buy_amount;
+            Buy_name = drink[Buy_itemnum].Drink_name;
+            Bought_name = Buy_name;
+            Buy_stock = drink[Buy_itemnum].Drink_stock;
+            Bought_stock = Buy_num;
+            Console.WriteLine($"Total payment amount : {Buy_amount}");
+            //돈이 부족, 재고는 충분
+            if (Buy_amount > Money && Buy_stock >= Buy_num)
+            {
+
+                Console.WriteLine("Money is scarce.");
+                Console.WriteLine($"Current money : {Money}");
+                return;
+            }
+            //재고 부족
+            else if (Buy_stock < Buy_num)
+            {
+                Console.WriteLine("Stock is scarce.");
+                return;
+            }
+
+            else if (Buy_amount <= Money && Buy_stock >= Buy_num)
+            {
+                Money -= Buy_amount;
+                Bought_money = Money;
+                Console.WriteLine($"You bought {Buy_num} {Buy_name}\nThank you.");
+                Console.WriteLine($"Current money : {Money}");
+                drink[Buy_itemnum].Drink_stock -= Buy_num;
+                /*foreach (var instance in Program.drink)
+                {
+                    if (instance.Drink_number == Buy_itemnum)
+                    {
+                        instance.Drink_stock -= Buy_num;
+                        break;
+                    }
+                }*/
+                history.Add(new History(name: Bought_name, price: Bought_price, stock: Bought_stock, money: Bought_money));
+                
+
+            }
+            Buy_amount = 0;
+                Buy_num = 0;
+        }
+
+
+        public static void NumberInput(out int number)
+        {
+            bool Succeed_value = int.TryParse(Console.ReadLine(), out int input);
+
+            if (Succeed_value && input > 0)
+            {
+                number = input;
+            }
+            else
+            {
+                Console.WriteLine("\n올바른 정보를 입력해 주십시오.\n");
+                number = 0;
+            }
+
+        }
+
+        /*static void Administ()
+        {
+            
+            
+                Console.WriteLine("##########################################");
+                Console.WriteLine("##############관리자모드 진입#############");
+                Console.WriteLine("##########################################\n\n");
+                while (true)
+                {
+                    Console.WriteLine("1. 상품 추가 2. 재고 채우기 3. 상품 정보 수정 4. 구매 이력 조회 5. 관리자모드 종료");
+                    Console.WriteLine("실행할 기능을 입력해 주십시오:\n");
+                    NumberInput(out int Function_number_Ad);
+                    Amenu Menu_select_Ad = (Amenu)Function_number_Ad;
+                    switch (Menu_select_Ad)
+                    {
+                        case Amenu.Plus_Drink:
+                            Drink.Menu();
+                            break;
+
+                        case Amenu.Charge_Stock:
+                            Charge_Money();
+                            break;
+
+                        case Amenu.Modify_Info:
+                            Check_Money();
+                            break;
+
+                        case Amenu.Ask_history:
+                            Buy_Drink();
+                            break;
+
+                        case Amenu.Exit:
+                            Console.WriteLine("관리자모드를 종료합니다.");
+                            return;
+
+                        default:
+                            Console.WriteLine("존재하지 않는 번호입니다.");
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("올바른 패스워드가 아닙니다.");
+                
+            }
+        }*/
+
+        class Drink
+        {
+            static public uint Drink_count;
+
+            public String Drink_name { get; set; }
+            public int Drink_price { get; set; }
+            public int Drink_stock { get; set; }
+            public Drink(String name, int price, int stock)
+            {
+                this.Drink_name = name;
+                this.Drink_price = price;
+                this.Drink_stock = stock;
+                Drink_count++;
+            }
+            static public void Menu()
+            {
+                foreach (var instance in Program.drink)
+                {
+                    Console.WriteLine($"{Program.drink.IndexOf(instance) + 1}. {instance.Drink_name}, {instance.Drink_price}원, 재고: {instance.Drink_stock}");
+                }
+                Console.WriteLine($"상품갯수:{Drink.Drink_count}");
+            }
+        }
+        public static class Admin
+        {
+
+            private static int Administer_Passward = 1234;
+            private static bool Permission = false;
+            public enum Amenu
+            {
+                None,
+                Plus_Drink,
+                Dele_Drink,
+                Charge_Stock,
+                Modify_Info,
+                Ask_history,
+                Exit
+            }
+            public static void Login()
+            {
+                Checkpermission();
+                if (Permission == true)
+                {
+                    while (Permission == true)
+                    {
+                        Console.WriteLine("1. Plus item 2. delete 3. Charge stock 4. Modify info of drink 5. 구매 이력 조회 6. Exit Admin");
+                        Console.WriteLine("Plz select a feature to execute :\n");
+                        Program.NumberInput(out int Function_number_Ad);
+                        Amenu Menu_select_Ad = (Amenu)Function_number_Ad;
+                        switch (Menu_select_Ad)
+                        {
+                            case Amenu.Plus_Drink:
+                                Plus_Drink();
+                                break;
+
+                            case Amenu.Dele_Drink:
+                                Del_Drink();
+                                break;
+
+                            case Amenu.Charge_Stock:
+                                Charge_Stock();
+                                break;
+
+                            case Amenu.Modify_Info:
+                                Modify_Info();
+                                break;
+
+                            case Amenu.Ask_history:
+                                Ask_history();
+                                break;
+
+                            case Amenu.Exit:
+                                Console.WriteLine("Exit Admin mod.");
+                                Permission = false;
+                                return;
+
+                            default:
+                                Console.WriteLine("Wrong value");
+                                break;
+                        }
+                    }
+                }
+            }
+
+
+            public static void Plus_Drink()
+            {
+                string name;
+                Drink.Menu();
+                Console.WriteLine("Input new drink's name");
+                name = Console.ReadLine();
+
+                Console.WriteLine("Input new drink's price");
+                Program.NumberInput(out int price);
+                if (price == 0)
+                {
+                    Console.WriteLine("Plz input price over 0\n");
+                    return;
+                }
+                Console.WriteLine("Input new drink's stock");
+                Program.NumberInput(out int stock);
+                if (stock == 0)
+                {
+                    Console.WriteLine("Plz input stock over 0\n");
+                    return;
+                }
+                Program.drink.Add(new Drink(price: price, stock: stock, name: name));
+                Drink.Menu();
+
+            }
+            public static void Charge_Stock()
+            {
+
+                Drink.Menu();
+                Console.WriteLine("Input the number you want to charge stock : ");
+                Program.NumberInput(out int charge_drinknum);
+                if (charge_drinknum == 0)
+                {
+                    Console.WriteLine("Plz input over 0\n");
+                    return;
+                }
+                else if (charge_drinknum > Drink.Drink_count)
+                {
+                    Console.WriteLine("Plz input correct number\n");
+                    return;
+                }
+                Console.WriteLine("How many stock? : ");
+                Program.NumberInput(out int charge_drinkstk);
+
+                charge_drinknum--;
+                Program.drink[charge_drinknum].Drink_stock += charge_drinkstk;
+                Drink.Menu();
+
+            }
+            public static void Checkpermission()
+            {
+                Console.WriteLine("Plz input the passward : ");
+                Program.NumberInput(out int inputpwd);
+                if (inputpwd == Administer_Passward)
+                {
+                    Console.WriteLine("Permission check success");
+                    Permission = true;
+                }
+
+                else if (inputpwd != 0 && inputpwd != Administer_Passward)
+                {
+                    Console.WriteLine("wrong passward");
+                }
+            }
+            public static void Del_Drink()
+            {
+                Drink.Menu();
+                Console.WriteLine("\nInput number of drink you want to del : ");
+                Program.NumberInput(out int dele_num);
+
+                if (dele_num > 0 && dele_num <= Drink.Drink_count)
+                {
+                    Console.WriteLine("\n#############Success##############\n");
+                    dele_num--;
+                    Program.drink.RemoveAt(dele_num);
+                    return;
+                }
+                else
+                {
+                    Console.WriteLine("Plz input correct number\n");
+                    return;
+                }
+            }
+            public static void Modify_Info()
+            {
+                Drink.Menu();
+                Console.WriteLine("Input number of drink you want to modify : ");
+                Program.NumberInput(out int mdfy_num);
+                if (mdfy_num > 0 && mdfy_num <= Drink.Drink_count)
+                {
+                    Console.WriteLine("\n#############Success##############\n");
+                    mdfy_num--;
+                    string name_mdfy;
+                    Console.WriteLine("Input new drink's name : ");
+                    name_mdfy = Console.ReadLine();
+
+                    Console.WriteLine("Input new drink's price : ");
+                    Program.NumberInput(out int price_mdfy);
+                    if (price_mdfy == 0)
+                    {
+                        Console.WriteLine("Plz input price over 0\n");
+                        return;
+                    }
+                    Console.WriteLine("Input new drink's stock");
+                    Program.NumberInput(out int stock_mdfy);
+                    if (stock_mdfy == 0)
+                    {
+                        Console.WriteLine("Plz input stock over 0\n");
+                        return;
+                    }
+                    Program.drink[mdfy_num].Drink_name = name_mdfy;
+                    Program.drink[mdfy_num].Drink_price = price_mdfy;
+                    Program.drink[mdfy_num].Drink_stock = stock_mdfy;
+                    Console.WriteLine("#########Success modify##########");
+                    Drink.Menu();
+                    return;
+
+                }
+                else
+                {
+                    Console.WriteLine("Plz input correct number\n");
+                    return;
+                }
+
+
+
+            }
+            public static void Ask_history()
+            {
+                Console.WriteLine("");
+                foreach (var hstry in Program.history)
+                {
+                    
+                    Console.WriteLine($"{Program.history.IndexOf(hstry) + 1}. You bought {hstry.History_stock} {hstry.History_name} and money is {hstry.History_price}won . Balance : {hstry.History_money}won");
+                }
+                Console.WriteLine("");
+                /*for (var i = 0; i < History.History_count; i++)
+                {
+                    Console.WriteLine($"{i + 1}. You bought {}");
+                }*/
+            }
+        }
+            public class History
+            {
+
+                static public uint History_count;
+
+                public String History_name { get; set; }
+                public int History_price { get; set; }
+                public int History_stock { get; set; }
+                public int History_money { get; set; }
+
+                public History(String name, int price, int stock,int money)
+                {
+                    this.History_name = name;
+                    this.History_price = price;
+                    this.History_stock = stock;
+                    this.History_money = money;
+                    History_count++;
+                }
+
+            }
+
+        }
+
+    }
